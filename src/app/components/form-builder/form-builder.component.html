@@ -1,0 +1,46 @@
+<div class="min-h-screen bg-gray-900 p-6">
+    <div class="max-w-7xl mx-auto">
+      <h1 class="text-3xl font-bold text-white mb-8">Angular Reactive Form Builder</h1>
+      
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Field Palette - Left -->
+        <div class="lg:col-span-1">
+          <div class="bg-gray-800 rounded-lg shadow-md p-6 border border-gray-700">
+            <h2 class="text-xl font-semibold text-gray-100 mb-4">Form Elements</h2>
+            <div class="space-y-2">
+              <button
+                *ngFor="let fieldType of fieldTypes"
+                (click)="addField(fieldType.type)"
+                class="w-full text-left px-4 py-3 bg-gray-700 hover:bg-gray-600 text-gray-100 rounded-lg transition-colors flex items-center gap-3 border border-gray-600"
+              >
+                <span class="text-xl">{{ fieldType.icon }}</span>
+                <span class="font-medium">{{ fieldType.label }}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Configuration Panel - Middle -->
+        <div class="lg:col-span-1">
+          <app-field-config-panel
+            [fields]="formFields"
+            [selectedField]="selectedField"
+            (fieldChanged)="onFieldChanged()"
+            (fieldRemoved)="removeFieldById($event)"
+            (fieldEdit)="onFieldEdit($event)"
+            (codeCopied)="onCodeCopied($event)"
+          ></app-field-config-panel>
+        </div>
+
+        <!-- Form Preview - Right -->
+        <div class="lg:col-span-1">
+          <app-form-preview
+            [fields]="formFields"
+            [form]="previewForm"
+            [selectedFieldId]="selectedField?.id || null"
+            (fieldSelected)="onFieldSelected($event)"
+          ></app-form-preview>
+        </div>
+      </div>
+    </div>
+  </div>
