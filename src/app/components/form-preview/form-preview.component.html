@@ -20,7 +20,11 @@
             [formControlName]="field.formControlName"
             [placeholder]="field.placeholder || ''"
             class="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-100 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400"
+            [class.border-red-500]="showValidationError(getControl(field))"
           >
+          <p *ngIf="showValidationError(getControl(field))" class="mt-1 text-sm text-red-400">
+            {{ getValidationMessage(field) }}
+          </p>
         </div>
 
         <!-- Textarea -->
@@ -34,11 +38,15 @@
             [placeholder]="field.placeholder || ''"
             rows="4"
             class="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-100 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400"
+            [class.border-red-500]="showValidationError(getControl(field))"
           ></textarea>
+          <p *ngIf="showValidationError(getControl(field))" class="mt-1 text-sm text-red-400">
+            {{ getValidationMessage(field) }}
+          </p>
         </div>
 
         <!-- Select -->
-        <div *ngIf="field.type === 'select'">
+        <div *ngIf="field.type === 'select'" (click)="$event.stopPropagation()">
           <label class="block text-sm font-medium text-gray-300 mb-1">
             {{ field.label }}
             <span *ngIf="field.required" class="text-red-400">*</span>
@@ -46,24 +54,34 @@
           <select
             [formControlName]="field.formControlName"
             class="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-100 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            [class.border-red-500]="showValidationError(getControl(field))"
+            (click)="$event.stopPropagation()"
           >
             <option value="">Select an option</option>
             <option *ngFor="let option of field.options" [value]="option">{{ option }}</option>
           </select>
+          <p *ngIf="showValidationError(getControl(field))" class="mt-1 text-sm text-red-400">
+            {{ getValidationMessage(field) }}
+          </p>
         </div>
 
         <!-- Checkbox -->
-        <div *ngIf="field.type === 'checkbox'" class="flex items-center">
-          <input
-            type="checkbox"
-            [formControlName]="field.formControlName"
-            [id]="field.id"
-            class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-600 bg-gray-700 rounded"
-          >
-          <label [for]="field.id" class="ml-2 block text-sm text-gray-300">
-            {{ field.label }}
-            <span *ngIf="field.required" class="text-red-400">*</span>
-          </label>
+        <div *ngIf="field.type === 'checkbox'">
+          <div class="flex items-center">
+            <input
+              type="checkbox"
+              [formControlName]="field.formControlName"
+              [id]="field.id"
+              class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-600 bg-gray-700 rounded"
+            >
+            <label [for]="field.id" class="ml-2 block text-sm text-gray-300">
+              {{ field.label }}
+              <span *ngIf="field.required" class="text-red-400">*</span>
+            </label>
+          </div>
+          <p *ngIf="showValidationError(getControl(field))" class="mt-1 text-sm text-red-400">
+            {{ getValidationMessage(field) }}
+          </p>
         </div>
 
         <!-- Radio -->
@@ -86,6 +104,9 @@
               </label>
             </div>
           </div>
+          <p *ngIf="showValidationError(getControl(field))" class="mt-1 text-sm text-red-400">
+            {{ getValidationMessage(field) }}
+          </p>
         </div>
 
         <!-- Heading -->
@@ -101,6 +122,140 @@
         <!-- Separator -->
         <div *ngIf="field.type === 'separator'">
           <hr class="border-gray-600">
+        </div>
+
+        <!-- Repeatable Group (FormArray) -->
+        <div *ngIf="field.type === 'repeatable-group'" [formArrayName]="field.formArrayName || field.formControlName" class="border border-gray-600 rounded-lg p-4 bg-gray-900">
+          <div class="flex justify-between items-center mb-4">
+            <h3 class="text-lg font-semibold text-gray-200">{{ field.label }}</h3>
+            <button
+              *ngIf="field.allowAddRow !== false"
+              type="button"
+              (click)="addArrayRow(field.formArrayName || field.formControlName, field.children || []); $event.stopPropagation()"
+              class="px-3 py-1 bg-green-600 hover:bg-green-700 text-white rounded-md text-sm transition-colors"
+            >
+              + Add Row
+            </button>
+          </div>
+
+          <div *ngFor="let group of getFormArray(field.formArrayName || field.formControlName).controls; let i = index" [formGroupName]="i" class="mb-4 p-4 bg-gray-800 border border-gray-700 rounded-lg">
+            <div class="flex justify-between items-start mb-3">
+              <h4 class="text-sm font-medium text-gray-300">Item {{ i + 1 }}</h4>
+              <button
+                type="button"
+                (click)="removeArrayRow(field.formArrayName || field.formControlName, i); $event.stopPropagation()"
+                class="px-2 py-1 bg-red-600 hover:bg-red-700 text-white rounded text-xs transition-colors"
+              >
+                Remove
+              </button>
+            </div>
+
+            <!-- Render child fields for each group -->
+            <div *ngFor="let childField of field.children" class="mb-3">
+              <!-- Text/Email/Number Input -->
+              <div *ngIf="childField.type === 'text' || childField.type === 'email' || childField.type === 'number'" (click)="selectField(childField.id); $event.stopPropagation()">
+                <label class="block text-sm font-medium text-gray-300 mb-1">
+                  {{ childField.label }}
+                  <span *ngIf="childField.required" class="text-red-400">*</span>
+                </label>
+                <input
+                  [type]="childField.type"
+                  [formControlName]="childField.formControlName"
+                  [placeholder]="childField.placeholder || ''"
+                  class="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-100 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400"
+                  [class.border-red-500]="showValidationError(getChildControl(childField, field.formArrayName || field.formControlName, i))"
+                >
+                <p *ngIf="showValidationError(getChildControl(childField, field.formArrayName || field.formControlName, i))" class="mt-1 text-sm text-red-400">
+                  {{ getValidationMessage(childField) }}
+                </p>
+              </div>
+
+              <!-- Textarea -->
+              <div *ngIf="childField.type === 'textarea'" (click)="selectField(childField.id); $event.stopPropagation()">
+                <label class="block text-sm font-medium text-gray-300 mb-1">
+                  {{ childField.label }}
+                  <span *ngIf="childField.required" class="text-red-400">*</span>
+                </label>
+                <textarea
+                  [formControlName]="childField.formControlName"
+                  [placeholder]="childField.placeholder || ''"
+                  rows="3"
+                  class="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-100 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400"
+                  [class.border-red-500]="showValidationError(getChildControl(childField, field.formArrayName || field.formControlName, i))"
+                ></textarea>
+                <p *ngIf="showValidationError(getChildControl(childField, field.formArrayName || field.formControlName, i))" class="mt-1 text-sm text-red-400">
+                  {{ getValidationMessage(childField) }}
+                </p>
+              </div>
+
+              <!-- Select -->
+              <div *ngIf="childField.type === 'select'" (click)="selectField(childField.id); $event.stopPropagation()">
+                <label class="block text-sm font-medium text-gray-300 mb-1">
+                  {{ childField.label }}
+                  <span *ngIf="childField.required" class="text-red-400">*</span>
+                </label>
+                <select
+                  [formControlName]="childField.formControlName"
+                  class="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-100 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  [class.border-red-500]="showValidationError(getChildControl(childField, field.formArrayName || field.formControlName, i))"
+                  (click)="$event.stopPropagation()"
+                >
+                  <option value="">Select an option</option>
+                  <option *ngFor="let option of childField.options" [value]="option">{{ option }}</option>
+                </select>
+                <p *ngIf="showValidationError(getChildControl(childField, field.formArrayName || field.formControlName, i))" class="mt-1 text-sm text-red-400">
+                  {{ getValidationMessage(childField) }}
+                </p>
+              </div>
+
+              <!-- Checkbox -->
+              <div *ngIf="childField.type === 'checkbox'">
+                <div class="flex items-center">
+                  <input
+                    type="checkbox"
+                    [formControlName]="childField.formControlName"
+                    [id]="childField.id + '_' + i"
+                    class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-600 bg-gray-700 rounded"
+                  >
+                  <label [for]="childField.id + '_' + i" class="ml-2 block text-sm text-gray-300">
+                    {{ childField.label }}
+                  </label>
+                </div>
+                <p *ngIf="showValidationError(getChildControl(childField, field.formArrayName || field.formControlName, i))" class="mt-1 text-sm text-red-400">
+                  {{ getValidationMessage(childField) }}
+                </p>
+              </div>
+
+              <!-- Radio -->
+              <div *ngIf="childField.type === 'radio'" (click)="selectField(childField.id); $event.stopPropagation()">
+                <label class="block text-sm font-medium text-gray-300 mb-2">
+                  {{ childField.label }}
+                  <span *ngIf="childField.required" class="text-red-400">*</span>
+                </label>
+                <div class="space-y-2" (click)="$event.stopPropagation()">
+                  <div *ngFor="let option of childField.options" class="flex items-center">
+                    <input
+                      type="radio"
+                      [formControlName]="childField.formControlName"
+                      [value]="option"
+                      [id]="childField.id + '_' + i + '_' + option"
+                      class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-600 bg-gray-700"
+                    >
+                    <label [for]="childField.id + '_' + i + '_' + option" class="ml-2 block text-sm text-gray-300">
+                      {{ option }}
+                    </label>
+                  </div>
+                </div>
+                <p *ngIf="showValidationError(getChildControl(childField, field.formArrayName || field.formControlName, i))" class="mt-1 text-sm text-red-400">
+                  {{ getValidationMessage(childField) }}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div *ngIf="getFormArray(field.formArrayName || field.formControlName).length === 0" class="text-center py-8 text-gray-500">
+            <p class="text-sm">No items added yet. Click "Add Row" to add an item.</p>
+          </div>
         </div>
       </div>
 

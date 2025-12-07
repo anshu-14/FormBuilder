@@ -1,6 +1,6 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormGroup, FormsModule ,ReactiveFormsModule} from '@angular/forms';
+import { FormGroup, FormArray, FormBuilder, FormControl, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { FormField } from '../../models/form-field';
 import { ToastService } from '../../services/toast.service';
 
@@ -33,7 +33,79 @@ export class FormPreviewComponent {
       this.toastService.success('Form submitted successfully!');
     } else {
       this.toastService.error('Please fill all required fields.');
+      // Mark all fields as touched to show validation messages
+      this.markFormGroupTouched(this.form);
     }
+  }
+
+  private markFormGroupTouched(formGroup: FormGroup) {
+    Object.keys(formGroup.controls).forEach(key => {
+      const control = formGroup.get(key);
+      if (control instanceof FormGroup) {
+        this.markFormGroupTouched(control);
+      } else if (control instanceof FormArray) {
+        control.controls.forEach((arrayControl: any) => {
+          if (arrayControl instanceof FormGroup) {
+            this.markFormGroupTouched(arrayControl);
+          } else {
+            arrayControl.markAsTouched();
+          }
+        });
+      } else {
+        control?.markAsTouched();
+      }
+    });
+  }
+
+  getFormArray(formControlName: string): FormArray {
+    return this.form.get(formControlName) as FormArray;
+  }
+
+  getControl(field: FormField): any {
+    return this.form.get(field.formControlName);
+  }
+
+  getChildControl(childField: FormField, arrayName: string, groupIndex: number): any {
+    const formArray = this.form.get(arrayName) as FormArray;
+    if (formArray && formArray.at(groupIndex)) {
+      return formArray.at(groupIndex).get(childField.formControlName);
+    }
+    return null;
+  }
+
+  showValidationError(control: any): boolean {
+    return control && control.invalid && (control.dirty || control.touched);
+  }
+
+  getValidationMessage(field: FormField): string {
+    return field.validationMessage || 'This field is required';
+  }
+
+  addArrayRow(formControlName: string, fields: FormField[]) {
+    const formArray = this.form.get(formControlName) as FormArray;
+    if (formArray) {
+      const newGroup = this.createGroupFormGroup(fields);
+      formArray.push(newGroup);
+    }
+  }
+
+  removeArrayRow(formControlName: string, index: number) {
+    const formArray = this.form.get(formControlName) as FormArray;
+    if (formArray) {
+      formArray.removeAt(index);
+    }
+  }
+
+  private createGroupFormGroup(fields: FormField[]): FormGroup {
+    const group: { [key: string]: FormControl } = {};
+    fields.forEach(field => {
+      if (field.type !== 'heading' && field.type !== 'separator') {
+        const validators = field.required ? [Validators.required] : [];
+        group[field.formControlName] = new FormControl('', validators);
+      }
+    });
+    
+    return new FormGroup(group);
   }
 
   copyFullCode() {

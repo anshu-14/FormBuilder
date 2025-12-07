@@ -125,7 +125,7 @@
       </div>
 
       <!-- Form Control Name -->
-      <div *ngIf="editingField.type !== 'heading' && editingField.type !== 'separator' && editingField.type !== 'checkbox'">
+      <div *ngIf="editingField.type !== 'heading' && editingField.type !== 'separator' && editingField.type !== 'checkbox' && editingField.type !== 'repeatable-group'">
         <label class="block text-sm font-medium text-gray-300 mb-1">Form Control Name</label>
         <input
           type="text"
@@ -133,6 +133,44 @@
           (ngModelChange)="onFormControlChange()"
           class="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-100 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
         >
+      </div>
+
+      <!-- Form Array Name for Repeatable Group -->
+      <div *ngIf="editingField.type === 'repeatable-group'">
+        <label class="block text-sm font-medium text-gray-300 mb-1">Form Array Name</label>
+        <input
+          type="text"
+          [(ngModel)]="editingField.formArrayName"
+          (ngModelChange)="onFormControlChange()"
+          class="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-100 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          placeholder="Enter FormArray name"
+        >
+        <p class="text-xs text-gray-400 mt-1">This will be used as the FormArray name in the reactive form</p>
+      </div>
+
+      <!-- Allow Add Row for Repeatable Group -->
+      <div *ngIf="editingField.type === 'repeatable-group'" class="flex items-center">
+        <input
+          type="checkbox"
+          [(ngModel)]="editingField.allowAddRow"
+          (ngModelChange)="onFieldChange()"
+          id="allowAddRow"
+          class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-600 bg-gray-700 rounded"
+        >
+        <label for="allowAddRow" class="ml-2 block text-sm text-gray-300">Show Add Row Button</label>
+      </div>
+
+      <!-- Validation Message -->
+      <div *ngIf="editingField.type !== 'heading' && editingField.type !== 'separator'">
+        <label class="block text-sm font-medium text-gray-300 mb-1">Validation Message</label>
+        <input
+          type="text"
+          [(ngModel)]="editingField.validationMessage"
+          (ngModelChange)="onFieldChange()"
+          class="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-100 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          placeholder="This field is required"
+        >
+        <p class="text-xs text-gray-400 mt-1">Message to display when field validation fails</p>
       </div>
 
       <!-- Placeholder -->
@@ -148,14 +186,104 @@
 
       <!-- Options for Select/Radio -->
       <div *ngIf="editingField.type === 'select' || editingField.type === 'radio'">
-        <label class="block text-sm font-medium text-gray-300 mb-1">Options (comma separated)</label>
-        <input
-          type="text"
-          [(ngModel)]="optionsString"
-          (ngModelChange)="updateOptions()"
-          placeholder="Option 1, Option 2, Option 3"
-          class="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-100 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400"
-        >
+        <!-- Options Source Toggle -->
+        <div class="mb-3">
+          <label class="block text-sm font-medium text-gray-300 mb-2">Options Source</label>
+          <div class="flex gap-2">
+            <button
+              type="button"
+              (click)="setOptionsSource('static')"
+              [class.bg-blue-600]="editingField.optionsSource !== 'api'"
+              [class.bg-gray-600]="editingField.optionsSource === 'api'"
+              class="flex-1 px-3 py-2 text-gray-100 rounded-md transition-colors text-sm font-medium"
+            >
+              Static
+            </button>
+            <button
+              type="button"
+              (click)="setOptionsSource('api')"
+              [class.bg-blue-600]="editingField.optionsSource === 'api'"
+              [class.bg-gray-600]="editingField.optionsSource !== 'api'"
+              class="flex-1 px-3 py-2 text-gray-100 rounded-md transition-colors text-sm font-medium"
+            >
+              API
+            </button>
+          </div>
+        </div>
+
+        <!-- Static Options Input -->
+        <div *ngIf="editingField.optionsSource !== 'api'">
+          <label class="block text-sm font-medium text-gray-300 mb-1">Options (comma separated)</label>
+          <input
+            type="text"
+            [(ngModel)]="optionsString"
+            (ngModelChange)="updateOptions()"
+            placeholder="Option 1, Option 2, Option 3"
+            class="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-100 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400"
+          >
+        </div>
+
+        <!-- API Options Configuration -->
+        <div *ngIf="editingField.optionsSource === 'api'" class="space-y-3">
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-1">API Endpoint</label>
+            <input
+              type="text"
+              [(ngModel)]="editingField.apiEndpoint"
+              (ngModelChange)="onFieldChange()"
+              placeholder="https://api.example.com/options"
+              class="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-100 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400"
+            >
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-1">HTTP Method</label>
+            <select
+              [(ngModel)]="editingField.apiMethod"
+              (ngModelChange)="onFieldChange()"
+              class="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-100 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            >
+              <option value="GET">GET</option>
+              <option value="POST">POST</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-1">Response Path (e.g., "data.items" or "items")</label>
+            <input
+              type="text"
+              [(ngModel)]="editingField.optionsPath"
+              (ngModelChange)="onFieldChange()"
+              placeholder="items"
+              class="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-100 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400"
+            >
+            <p class="text-xs text-gray-400 mt-1">Path to the array in the API response</p>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-1">Value Key</label>
+            <input
+              type="text"
+              [(ngModel)]="editingField.valueKey"
+              (ngModelChange)="onFieldChange()"
+              placeholder="id"
+              class="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-100 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400"
+            >
+            <p class="text-xs text-gray-400 mt-1">Key for option value</p>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-300 mb-1">Label Key</label>
+            <input
+              type="text"
+              [(ngModel)]="editingField.labelKey"
+              (ngModelChange)="onFieldChange()"
+              placeholder="name"
+              class="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-100 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400"
+            >
+            <p class="text-xs text-gray-400 mt-1">Key for option label</p>
+          </div>
+        </div>
       </div>
 
       <!-- Required Checkbox -->
@@ -168,6 +296,291 @@
           class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-600 bg-gray-700 rounded"
         >
         <label for="required" class="ml-2 block text-sm text-gray-300">Required</label>
+      </div>
+
+      <!-- Repeatable Group Children Management -->
+      <div *ngIf="editingField.type === 'repeatable-group'" class="border-t border-gray-700 pt-4">
+        <div class="mb-4">
+          <h4 class="text-sm font-semibold text-gray-300 mb-3">Group Fields</h4>
+          
+          <!-- Children Fields List -->
+          <div *ngIf="editingField.children && editingField.children.length > 0" class="space-y-2 mb-4">
+            <div *ngFor="let child of editingField.children; let i = index" class="bg-gray-700 rounded p-3 border border-gray-600">
+              <div class="flex items-center justify-between mb-2">
+                <div class="flex items-center gap-2 flex-1">
+                  <span class="text-lg">{{ getFieldTypeIcon(child) }}</span>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-gray-100 text-sm font-medium truncate">{{ child.label || child.formControlName }}</p>
+                    <p class="text-gray-400 text-xs truncate">{{ child.type }}</p>
+                  </div>
+                </div>
+                <div class="flex items-center gap-1">
+                  <button
+                    type="button"
+                    (click)="editChildField(child)"
+                    class="p-1 text-gray-400 hover:text-blue-400 hover:bg-gray-600 rounded transition-colors"
+                    title="Edit field"
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                    </svg>
+                  </button>
+                  <button
+                    type="button"
+                    (click)="removeChildField(i)"
+                    class="p-1 text-gray-400 hover:text-red-400 hover:bg-gray-600 rounded transition-colors"
+                    title="Remove field"
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div *ngIf="!editingField.children || editingField.children.length === 0" class="text-gray-400 text-sm py-3 text-center">
+            No fields in group yet
+          </div>
+
+          <!-- Add Child Field Buttons -->
+          <div class="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              (click)="addChildField('text')"
+              class="px-3 py-2 bg-gray-700 hover:bg-gray-600 text-gray-300 text-xs rounded border border-gray-600 transition-colors"
+              title="Add text field"
+            >
+              📝 Text
+            </button>
+            <button
+              type="button"
+              (click)="addChildField('email')"
+              class="px-3 py-2 bg-gray-700 hover:bg-gray-600 text-gray-300 text-xs rounded border border-gray-600 transition-colors"
+              title="Add email field"
+            >
+              📧 Email
+            </button>
+            <button
+              type="button"
+              (click)="addChildField('number')"
+              class="px-3 py-2 bg-gray-700 hover:bg-gray-600 text-gray-300 text-xs rounded border border-gray-600 transition-colors"
+              title="Add number field"
+            >
+              🔢 Number
+            </button>
+            <button
+              type="button"
+              (click)="addChildField('textarea')"
+              class="px-3 py-2 bg-gray-700 hover:bg-gray-600 text-gray-300 text-xs rounded border border-gray-600 transition-colors"
+              title="Add textarea"
+            >
+              📄 Textarea
+            </button>
+            <button
+              type="button"
+              (click)="addChildField('select')"
+              class="px-3 py-2 bg-gray-700 hover:bg-gray-600 text-gray-300 text-xs rounded border border-gray-600 transition-colors"
+              title="Add select field"
+            >
+              📋 Select
+            </button>
+            <button
+              type="button"
+              (click)="addChildField('checkbox')"
+              class="px-3 py-2 bg-gray-700 hover:bg-gray-600 text-gray-300 text-xs rounded border border-gray-600 transition-colors"
+              title="Add checkbox"
+            >
+              ☑️ Checkbox
+            </button>
+            <button
+              type="button"
+              (click)="addChildField('radio')"
+              class="px-3 py-2 bg-gray-700 hover:bg-gray-600 text-gray-300 text-xs rounded border border-gray-600 transition-colors col-span-2"
+              title="Add radio button"
+            >
+              🔘 Radio Button
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Child Field Edit Modal -->
+      <div *ngIf="editingChildField" class="fixed inset-0 z-60 flex items-center justify-center p-4">
+        <div class="fixed inset-0 pointer-events-auto bg-black bg-opacity-50" (click)="cancelChildFieldEdit()"></div>
+        <div class="bg-gray-800 rounded-lg shadow-2xl border border-gray-700 w-full max-w-lg max-h-[90vh] overflow-y-auto relative z-10 pointer-events-auto" (click)="$event.stopPropagation()">
+          <div class="sticky top-0 bg-gray-800 border-b border-gray-700 px-6 py-4 flex items-center justify-between">
+            <h3 class="text-lg font-semibold text-gray-100">Edit Child Field</h3>
+            <button (click)="cancelChildFieldEdit()" class="text-gray-400 hover:text-gray-200 transition-colors">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </button>
+          </div>
+
+          <div class="p-6 space-y-4">
+            <!-- Label -->
+            <div *ngIf="editingChildField.type !== 'heading' && editingChildField.type !== 'separator'">
+              <label class="block text-sm font-medium text-gray-300 mb-1">Label</label>
+              <input
+                type="text"
+                [(ngModel)]="editingChildField.label"
+                class="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-100 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+            </div>
+
+            <!-- Form Control Name -->
+            <div *ngIf="editingChildField.type !== 'heading' && editingChildField.type !== 'separator' && editingChildField.type !== 'checkbox'">
+              <label class="block text-sm font-medium text-gray-300 mb-1">Form Control Name</label>
+              <input
+                type="text"
+                [(ngModel)]="editingChildField.formControlName"
+                class="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-100 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+            </div>
+
+            <!-- Validation Message -->
+            <div *ngIf="editingChildField.type !== 'heading' && editingChildField.type !== 'separator'">
+              <label class="block text-sm font-medium text-gray-300 mb-1">Validation Message</label>
+              <input
+                type="text"
+                [(ngModel)]="editingChildField.validationMessage"
+                class="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-100 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="This field is required"
+              >
+              <p class="text-xs text-gray-400 mt-1">Message to display when field validation fails</p>
+            </div>
+
+            <!-- Placeholder -->
+            <div *ngIf="editingChildField.type !== 'heading' && editingChildField.type !== 'separator' && editingChildField.type !== 'checkbox'">
+              <label class="block text-sm font-medium text-gray-300 mb-1">Placeholder</label>
+              <input
+                type="text"
+                [(ngModel)]="editingChildField.placeholder"
+                class="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-100 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+            </div>
+
+            <!-- Options for Select/Radio -->
+            <div *ngIf="editingChildField.type === 'select' || editingChildField.type === 'radio'">
+              <label class="block text-sm font-medium text-gray-300 mb-2">Options Source</label>
+              <div class="flex gap-4 mb-3">
+                <label class="flex items-center">
+                  <input
+                    type="radio"
+                    [value]="'static'"
+                    [(ngModel)]="editingChildField.optionsSource"
+                    class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-600 bg-gray-700"
+                  >
+                  <span class="ml-2 text-sm text-gray-300">Static Options</span>
+                </label>
+                <label class="flex items-center">
+                  <input
+                    type="radio"
+                    [value]="'api'"
+                    [(ngModel)]="editingChildField.optionsSource"
+                    class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-600 bg-gray-700"
+                  >
+                  <span class="ml-2 text-sm text-gray-300">From API</span>
+                </label>
+              </div>
+
+              <!-- Static Options -->
+              <div *ngIf="!editingChildField.optionsSource || editingChildField.optionsSource === 'static'">
+                <label class="block text-sm font-medium text-gray-300 mb-1">Options (comma separated)</label>
+                <input
+                  type="text"
+                  [ngModel]="editingChildField.options?.join(', ') || ''"
+                  (ngModelChange)="updateChildFieldOptions($event)"
+                  placeholder="Option 1, Option 2, Option 3"
+                  class="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-100 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400"
+                >
+              </div>
+
+              <!-- API Options -->
+              <div *ngIf="editingChildField.optionsSource === 'api'" class="space-y-3">
+                <div>
+                  <label class="block text-sm font-medium text-gray-300 mb-1">API Endpoint</label>
+                  <input
+                    type="text"
+                    [(ngModel)]="editingChildField.apiEndpoint"
+                    placeholder="https://api.example.com/options"
+                    class="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-100 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400"
+                  >
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-300 mb-1">HTTP Method</label>
+                  <select
+                    [(ngModel)]="editingChildField.apiMethod"
+                    class="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-100 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="GET">GET</option>
+                    <option value="POST">POST</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-300 mb-1">Options Path (optional)</label>
+                  <input
+                    type="text"
+                    [(ngModel)]="editingChildField.optionsPath"
+                    placeholder="data.items or items"
+                    class="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-100 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400"
+                  >
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                  <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Value Key</label>
+                    <input
+                      type="text"
+                      [(ngModel)]="editingChildField.valueKey"
+                      placeholder="value or id"
+                      class="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-100 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400"
+                    >
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-1">Label Key</label>
+                    <input
+                      type="text"
+                      [(ngModel)]="editingChildField.labelKey"
+                      placeholder="label or name"
+                      class="w-full px-3 py-2 bg-gray-700 border border-gray-600 text-gray-100 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder-gray-400"
+                    >
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Required Checkbox -->
+            <div *ngIf="editingChildField.type !== 'heading' && editingChildField.type !== 'separator'" class="flex items-center">
+              <input
+                type="checkbox"
+                [(ngModel)]="editingChildField.required"
+                id="childRequired"
+                class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-600 bg-gray-700 rounded"
+              >
+              <label for="childRequired" class="ml-2 block text-sm text-gray-300">Required</label>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="pt-4 border-t border-gray-700">
+              <div class="grid grid-cols-2 gap-2">
+                <button
+                  (click)="cancelChildFieldEdit()"
+                  class="px-4 py-2 bg-gray-600 hover:bg-gray-500 text-white rounded-md transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  (click)="saveChildField()"
+                  class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md transition-colors"
+                >
+                  Save
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
         <!-- Action Buttons -->

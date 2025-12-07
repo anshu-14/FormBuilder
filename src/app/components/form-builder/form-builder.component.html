@@ -25,6 +25,7 @@
           <app-field-config-panel
             [fields]="formFields"
             [selectedField]="selectedField"
+            [openFieldModalId]="openModalFieldId"
             (fieldChanged)="onFieldChanged()"
             (fieldRemoved)="removeFieldById($event)"
             (fieldEdit)="onFieldEdit($event)"
